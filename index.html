@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>猜数字小游戏 · 1~100</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{min-height:100vh;display:flex;align-items:center;justify-content:center;
+  font-family:"PingFang SC","Microsoft YaHei",sans-serif;
+  background:radial-gradient(circle at 30% 20%,#2b1d4a,#140d24 60%,#0c0817);color:#efe9f5;padding:20px}
+.card{width:100%;max-width:420px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);
+  border-radius:20px;padding:32px 28px;box-shadow:0 20px 60px rgba(0,0,0,.5);backdrop-filter:blur(8px)}
+h1{font-size:22px;text-align:center;letter-spacing:2px;margin-bottom:6px}
+.sub{text-align:center;font-size:12px;color:#a99fc0;margin-bottom:24px;letter-spacing:1px}
+label{display:block;font-size:12px;color:#a99fc0;margin-bottom:8px;letter-spacing:1px}
+input{width:100%;padding:14px 16px;font-size:18px;border-radius:12px;border:1px solid rgba(255,255,255,.18);
+  background:rgba(0,0,0,.25);color:#efe9f5;outline:none;transition:.25s;text-align:center}
+input:focus{border-color:#c9a86a;box-shadow:0 0 0 3px rgba(201,168,106,.15)}
+.row{display:flex;gap:10px;margin-top:14px}
+button{flex:1;padding:13px;border-radius:12px;border:none;cursor:pointer;font-size:14px;font-weight:600;
+  letter-spacing:1px;transition:.25s}
+.primary{background:linear-gradient(135deg,#c9a86a,#e0c98a);color:#2b1d4a}
+.primary:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.ghost{background:rgba(255,255,255,.08);color:#efe9f5;border:1px solid rgba(255,255,255,.16)}
+.ghost:hover{background:rgba(255,255,255,.14)}
+.msg{margin-top:20px;min-height:24px;text-align:center;font-size:15px;letter-spacing:1px;transition:.2s}
+.good{color:#7ddca4}.low{color:#79c0ef}.high{color:#f0a58c}.warn{color:#e0c98a}
+.meta{display:flex;justify-content:space-between;margin-top:18px;font-size:12px;color:#a99fc0;letter-spacing:1px}
+.hint{margin-top:16px;font-size:11px;color:#7d7396;text-align:center;line-height:1.7}
+ul{margin-top:18px;max-height:150px;overflow-y:auto;font-size:12px;color:#a99fc0;line-height:1.9}
+ul li{list-style:none;padding:3px 0;border-bottom:1px dashed rgba(255,255,255,.07)}
+.tag{display:inline-block;min-width:26px;padding:1px 6px;margin-right:8px;border-radius:6px;
+  background:rgba(201,168,106,.16);color:#e0c98a;font-family:monospace;text-align:center}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>猜 数 字 小 游 戏</h1>
+  <p class="sub">范围 1 ~ 100 · 猜对为止</p>
+
+  <label for="num">请输入你猜的数字</label>
+  <input id="num" type="number" min="1" max="100" placeholder="1 ~ 100" autocomplete="off">
+
+  <div class="row">
+    <button class="primary" id="guessBtn">猜 一 下</button>
+    <button class="ghost" id="resetBtn">重 新 开 始</button>
+  </div>
+
+  <p class="msg" id="msg">我已经想好了一个数字，快来试试吧！</p>
+
+  <div class="meta">
+    <span>已猜次数：<b id="cnt">0</b></span>
+    <span>剩余范围：<b id="range">1 ~ 100</b></span>
+  </div>
+
+  <ul id="log"></ul>
+
+  <p class="hint">小技巧：用「二分法」猜最快，<br>每次猜中间的数，7 次以内必中！</p>
+</div>
+
+<script>
+var answer, cnt, lo, hi, over;
+
+function init() {
+    answer = Math.floor(Math.random() * 100) + 1;  // 1~100
+    cnt = 0;
+    lo = 1;
+    hi = 100;
+    over = false;
+    document.getElementById('cnt').textContent = '0';
+    document.getElementById('range').textContent = '1 ~ 100';
+    document.getElementById('log').innerHTML = '';
+    setMsg('我已经想好了一个数字，快来试试吧！', '');
+    document.getElementById('num').value = '';
+    document.getElementById('num').disabled = false;
+    document.getElementById('num').focus();
+}
+
+function setMsg(t, c) {
+    var m = document.getElementById('msg');
+    m.textContent = t;
+    m.className = 'msg' + (c ? ' ' + c : '');
+}
+
+function guess() {
+    if (over) return;
+    var v = document.getElementById('num').value;
+    var n = parseInt(v, 10);
+
+    if (isNaN(n) || n < 1 || n > 100) {
+        setMsg('请输入 1~100 之间的整数！', 'warn');
+        return;
+    }
+
+    cnt++;
+    document.getElementById('num').value = '';
+    document.getElementById('cnt').textContent = cnt;
+
+    if (n < answer) {
+        if (n + 1 > lo) lo = n + 1;
+        setMsg('小了！再往大猜。', 'low');
+    } else if (n > answer) {
+        if (n - 1 < hi) hi = n - 1;
+        setMsg('大了！再往小猜。', 'high');
+    } else {
+        setMsg('★ 恭喜猜对！答案就是 ' + answer + '，用了 ' + cnt + ' 次。', 'good');
+        over = true;
+        document.getElementById('num').disabled = true;
+        return;
+    }
+
+    document.getElementById('range').textContent = lo + ' ~ ' + hi;
+
+    // 记录一条历史
+    var li = document.createElement('li');
+    li.innerHTML = '<span class="tag">' + cnt + '</span>猜了 ' + n;
+    document.getElementById('log').appendChild(li);
+}
+
+document.getElementById('guessBtn').addEventListener('click', guess);
+document.getElementById('resetBtn').addEventListener('click', init);
+document.getElementById('num').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') guess();
+});
+
+init();
+</script>
+</body>
+</html>
