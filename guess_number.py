@@ -3,6 +3,16 @@
 # 运行方式：python guess_number.py
 
 import random
+import sys
+
+
+def safe_input(tip):
+    # 正常读一行；如果输入被中断（比如管道输入结束），就当成退出游戏
+    try:
+        return input(tip)
+    except EOFError:
+        print("\n输入结束，游戏退出，再见！")
+        sys.exit(0)
 
 
 def main():
@@ -20,7 +30,7 @@ def main():
         print("（输入 0 可以直接认输）")
 
         while True:
-            s = input("请输入你猜的数字：")
+            s = safe_input("请输入你猜的数字：")
 
             # 判断输入是不是合法数字
             if not s.lstrip("-").isdigit():
@@ -52,7 +62,7 @@ def main():
                 break
 
         # 询问是否再来一局
-        again = input("\n再来一局？(y/n)：").strip().lower()
+        again = safe_input("\n再来一局？(y/n)：").strip().lower()
         if again != "y":
             print("游戏结束，再见！")
             break
